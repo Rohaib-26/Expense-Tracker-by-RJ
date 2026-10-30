@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PennyPilot — Personal Finance Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased flex flex-col md:flex-row">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-full md:w-64 bg-slate-800 border-r border-slate-700/60 flex flex-col shrink-0">
+        <div class="p-6 border-b border-slate-700/60 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-tight text-white">PennyPilot</h1>
+                    <p class="text-xs text-slate-400">By Rohaib Javed</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-1">
+            <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 font-medium transition">
+                <i class="fa-solid fa-chart-pie w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#transactions-section" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 transition">
+                <i class="fa-solid fa-list-check w-5"></i>
+                <span>Transactions</span>
+            </a>
+            <a href="#analytics-section" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 transition">
+                <i class="fa-solid fa-chart-line w-5"></i>
+                <span>Analytics</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-700/60">
+            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/40 text-xs text-slate-400">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-semibold text-slate-300">Storage</span>
+                    <span class="text-emerald-400"><i class="fa-solid fa-database mr-1"></i> Local</span>
+                </div>
+                <p>Data is stored locally in your web browser.</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <!-- Top Navigation / Header -->
+        <header class="bg-slate-800/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-700/60 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-bold text-white">Financial Dashboard</h2>
+                <p class="text-xs text-slate-400">Overview of your income, expenses, and balance</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button id="export-csv-btn" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-lg transition flex items-center space-x-2">
+                    <i class="fa-solid fa-file-csv"></i>
+                    <span>Export CSV</span>
+                </button>
+                <button id="open-modal-btn" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold text-xs rounded-lg shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add Transaction</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="p-6 space-y-6 max-w-7xl w-full mx-auto">
+            <!-- Balance Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Total Balance -->
+                <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/50 transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Balance</p>
+                            <h3 id="total-balance" class="text-3xl font-extrabold text-white mt-2">$0.00</h3>
+                        </div>
+                        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                            <i class="fa-solid fa-wallet text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-xs text-slate-400 flex items-center">
+                        <span id="balance-status" class="text-emerald-400 font-semibold flex items-center mr-2">
+                            <i class="fa-solid fa-shield-halved mr-1"></i> Net Wealth
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Total Income -->
+                <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/50 transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Income</p>
+                            <h3 id="total-income" class="text-3xl font-extrabold text-emerald-400 mt-2">$0.00</h3>
+                        </div>
+                        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                            <i class="fa-solid fa-arrow-trend-up text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-xs text-slate-400">
+                        Total inflows recorded
+                    </div>
+                </div>
+
+                <!-- Total Expenses -->
+                <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-6 relative overflow-hidden group hover:border-rose-500/50 transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Expenses</p>
+                            <h3 id="total-expenses" class="text-3xl font-extrabold text-rose-400 mt-2">$0.00</h3>
+                        </div>
+                        <div class="p-3 bg-rose-500/10 text-rose-400 rounded-xl">
+                            <i class="fa-solid fa-arrow-trend-down text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-xs text-slate-400">
+                        Total outflows recorded
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div id="analytics-section" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Income vs Expense Bar Chart -->
+                <div class="lg:col-span-2 bg-slate-800 border border-slate-700/60 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-200">Income vs Expenses Analysis</h3>
+                        <span class="text-xs text-slate-400 bg-slate-700/50 px-2.5 py-1 rounded-md">Visual Breakdown</span>
+                    </div>
+                    <div class="h-64 relative">
+                        <canvas id="overviewChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Category Expenses Pie/Doughnut Chart -->
+                <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-200">Expense Categories</h3>
+                        <span class="text-xs text-slate-400 bg-slate-700/50 px-2.5 py-1 rounded-md">Distribution</span>
+                    </div>
+                    <div class="h-64 relative flex items-center justify-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions List Section -->
+            <div id="transactions-section" class="bg-slate-800 border border-slate-700/60 rounded-2xl p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h3 class="font-bold text-slate-200 text-lg">Recent Transactions</h3>
+                    
+                    <!-- Search and Filters Controls -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Search Box -->
+                        <div class="relative flex-1 sm:w-48">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="search-input" placeholder="Search..." class="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                        </div>
+
+                        <!-- Category Filter -->
+                        <select id="category-filter" class="bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                            <option value="all">All Categories</option>
+                            <option value="Food">Food</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Bills">Bills</option>
+                            <option value="Salary">Salary</option>
+                            <option value="Other">Other</option>
+                        </select>
+
+                        <!-- Type Filter -->
+                        <select id="type-filter" class="bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                            <option value="all">All Types</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-700/60 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                                <th class="py-3 px-4">Title</th>
+                                <th class="py-3 px-4">Category</th>
+                                <th class="py-3 px-4">Date</th>
+                                <th class="py-3 px-4 text-right">Amount</th>
+                                <th class="py-3 px-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-list" class="divide-y divide-slate-700/40 text-slate-300">
+                            <!-- Transactions rendered via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden py-12 text-center text-slate-500">
+                    <i class="fa-solid fa-receipt text-4xl mb-3 block"></i>
+                    <p class="text-sm">No transactions found matching your criteria.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Form (Add / Edit Transaction) -->
+    <div id="transaction-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-6 space-y-5 shadow-2xl relative">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <h3 id="modal-title" class="text-lg font-bold text-white">Add Transaction</h3>
+
+            <form id="transaction-form" class="space-y-4">
+                <input type="hidden" id="transaction-id">
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Title</label>
+                    <input type="text" id="title" required placeholder="e.g. Grocery Shopping" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Amount ($)</label>
+                        <input type="number" step="0.01" id="amount" required placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Type</label>
+                        <select id="type" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                            <option value="expense">Expense</option>
+                            <option value="income">Income</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Category</label>
+                        <select id="category" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                            <option value="Food">Food</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Bills">Bills</option>
+                            <option value="Salary">Salary</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Date</label>
+                        <input type="date" id="date" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-3">
+                    <button type="button" id="cancel-btn" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-semibold rounded-lg transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold rounded-lg transition">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="js/script.js"></script>
+</body>
+</html>
